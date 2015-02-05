@@ -1,5 +1,5 @@
 {
-    "name": "lennaert/cakephp3-mandrill",
+    "name": "lennaertse/cakephp3-mandrill",
     "description": "Mandrill Email Transport for CakePHP 3",
     "type": "cakephp-plugin",
     "keywords": ["cakephp", "mandrill"],
