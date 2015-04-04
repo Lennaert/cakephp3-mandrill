@@ -11,7 +11,7 @@
  */
 namespace MandrillEmail\Network\Email;
 
-use Cake\Network\Email;
+use Cake\Network\Email\Email;
 use Cake\Network\Exception\SocketException;
 use Cake\Network\Http\Client;
 use Cake\Utility\Hash;
@@ -67,7 +67,7 @@ class MandrillTransport extends AbstractTransport
  * @param \Cake\Network\Email\Email $email Cake Email
  * @return array
  */
-    public function send(\Cake\Network\Email\Email $email)
+    public function send(Email $email)
     {
         $this->transportConfig = Hash::merge($this->transportConfig, $this->_config);
 
@@ -98,6 +98,9 @@ class MandrillTransport extends AbstractTransport
                 ];
             }
         }
+
+        // Attachments
+        $message = $this->_attachments($email, $message);
 
         // Create a new scoped Http Client
         $this->http = new Client([
@@ -214,5 +217,36 @@ class MandrillTransport extends AbstractTransport
         }
 
         return $response->json;
+    }
+
+
+/**
+ * Format the attachments
+ *
+ * @param Email $email
+ * @param type $message
+ * @return array Message
+ */
+    protected function _attachments(Email $email, $message = [])
+    {
+        foreach ($email->attachments() as $filename => $attach) {
+            $content = base64_encode(file_get_contents($attach['file']));
+
+            if (isset($attach['contentId'])) {
+                $message['images'][] = [
+                    'type'    => $attach['mimetype'],
+                    'name'    => $attach['contentId'],
+                    'content' => $content,
+                ];
+            } else {
+                $message['attachments'][] = [
+                    'type'    => $attach['mimetype'],
+                    'name'    => $filename,
+                    'content' => $content,
+                ];
+            }
+        }
+
+        return $message;
     }
 }
