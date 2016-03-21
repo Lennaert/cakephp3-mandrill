@@ -11,6 +11,7 @@
  */
 namespace MandrillEmail\Network\Email;
 
+use Cake\Core\Configure;
 use Cake\Network\Email\Email;
 use Cake\Network\Exception\SocketException;
 use Cake\Network\Http\Client;
@@ -75,7 +76,7 @@ class MandrillTransport extends AbstractTransport
         $message = [
             'html'                      => $email->message(\Cake\Network\Email\Email::MESSAGE_HTML),
             'text'                      => $email->message(\Cake\Network\Email\Email::MESSAGE_TEXT),
-            'subject'                   => mb_decode_mimeheader($email->subject()), // Decode because Mandrill is encoding
+            'subject'                   => $this->_decode($email->subject()), // Decode because Mandrill is encoding
             'from_email'                => key($email->from()), // Make sure the domain is registered and verified within Mandrill
             'from_name'                 => current($email->from()),
             'to'                        => [ ],
@@ -248,5 +249,20 @@ class MandrillTransport extends AbstractTransport
         }
 
         return $message;
+    }
+    
+/**
+ * Decode the specified string using the current charset
+ *
+ * @param string $text String to decode
+ * @return string Decoded string
+ */
+    protected function _decode($text) 
+    {
+        $restore = mb_internal_encoding();
+        mb_internal_encoding(Configure::read('App.encoding'));
+        $return = mb_decode_mimeheader($text);
+        mb_internal_encoding($restore);
+        return $return;
     }
 }
