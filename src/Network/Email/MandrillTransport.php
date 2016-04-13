@@ -80,7 +80,7 @@ class MandrillTransport extends AbstractTransport
             'from_email'                => key($email->from()), // Make sure the domain is registered and verified within Mandrill
             'from_name'                 => current($email->from()),
             'to'                        => [ ],
-            'headers'                   => ['Reply-To' => key($email->from())],
+            'headers'                   => ['Reply-To' => is_null(key($email->replyTo()))?key($email->from()):key($email->replyTo())],
             'recipient_metadata'        => [ ],
             'attachments'               => [ ],
             'images'                    => [ ]
