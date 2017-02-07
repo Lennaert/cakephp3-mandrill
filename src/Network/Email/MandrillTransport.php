@@ -155,7 +155,7 @@ class MandrillTransport extends AbstractTransport
 
         $response = $this->http->post('/api/1.0/messages/send.json', json_encode($payload), ['type' => 'json']);
 
-        if (!$response) {
+        if (!$response || $response->code >= 300) {
             throw new SocketException($response->code);
         }
 
@@ -184,7 +184,7 @@ class MandrillTransport extends AbstractTransport
 
         $response = $this->http->post('/api/1.0/messages/send-template.json', json_encode($payload), ['type' => 'json']);
 
-        if (!$response) {
+        if (!$response || $response->code >= 300) {
             throw new SocketException($response->code);
         }
 
