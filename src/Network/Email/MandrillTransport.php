@@ -99,7 +99,9 @@ class MandrillTransport extends AbstractTransport
                 ];
             }
         }
-
+        if ($this->config('Mandrill.preserve_recipients')) {
+            $message['preserve_recipients'] = true;
+        }
         // Attachments
         $message = $this->_attachments($email, $message);
 
