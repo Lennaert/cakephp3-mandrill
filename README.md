@@ -20,7 +20,9 @@ CakePHP uses [profiles and transports](http://book.cakephp.org/3.0/en/core-libra
             'emailFormat' => 'both',
             'from' => ['you@yours.com' => 'Bob Bobbington'],
             'sender' => ['you@yours.com' => 'Bob Bobbington'],
-            'Mandrill' => [] // Don't ask, the plugin needs/wants this empty array
+            'Mandrill' => [
+                'preserve_recipients' => true
+            ]
         ]
     ],
     'EmailTransport' => [
