@@ -9,14 +9,14 @@
  * @link          http://lennaert.nu
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
-namespace MandrillEmail\Network\Email;
+namespace App\Email;
 
 use Cake\Core\Configure;
-use Cake\Network\Email\Email;
+use Cake\Mailer\Email;
 use Cake\Network\Exception\SocketException;
-use Cake\Network\Http\Client;
+use Cake\Http\Client;
 use Cake\Utility\Hash;
-use Cake\Network\Email\AbstractTransport;
+use Cake\Mailer\AbstractTransport;
 
 /**
  * Send mail using mail() function
@@ -62,36 +62,37 @@ class MandrillTransport extends AbstractTransport
         'ip_pool' => null
     ];
 
-/**
- * Send mail using Mandrill (by MailChimp)
- *
- * @param \Cake\Network\Email\Email $email Cake Email
- * @return array
- */
+    /**
+     * Send mail using Mandrill (by MailChimp)
+     *
+     * @param \Cake\Network\Email\Email $email Cake Email
+     * @return array
+     */
     public function send(Email $email)
     {
         $this->transportConfig = Hash::merge($this->transportConfig, $this->_config);
 
         // Initiate a new Mandrill Message parameter array
         $message = [
-            'html'                      => $email->message(\Cake\Network\Email\Email::MESSAGE_HTML),
-            'text'                      => $email->message(\Cake\Network\Email\Email::MESSAGE_TEXT),
-            'subject'                   => $this->_decode($email->subject()), // Decode because Mandrill is encoding
-            'from_email'                => key($email->from()), // Make sure the domain is registered and verified within Mandrill
-            'from_name'                 => current($email->from()),
+            'html'                      => $email->message(Email::MESSAGE_HTML),
+            'text'                      => $email->message(Email::MESSAGE_TEXT),
+            'subject'                   => $this->_decode($email->getSubject()), // Decode because Mandrill is encoding
+            'from_email'                => key($email->getFrom()), // Make sure the domain is registered and verified within Mandrill
+            'from_name'                 => current($email->getFrom()),
             'to'                        => [ ],
-            'headers'                   => ['Reply-To' => is_null(key($email->replyTo()))?key($email->from()):key($email->replyTo())],
+            'headers'                   => ['Reply-To' => is_null(key($email->getReplyTo()))?key($email->getFrom()):key($email->getReplyTo())],
             'recipient_metadata'        => [ ],
             'attachments'               => [ ],
             'images'                    => [ ]
         ];
 
         // Merge Mandrill Parameters
-        $message = array_merge($message, Hash::merge($this->defaultParameters, $email->profile()['Mandrill']));
+        $message = array_merge($message, Hash::merge($this->defaultParameters, $email->getProfile()['Mandrill']));
 
         // Add receipients
         foreach (['to', 'cc', 'bcc'] as $type) {
-            foreach ($email->{$type}() as $mail => $name) {
+            $method = "get{$type}";
+            foreach ($email->{$method}() as $mail => $name) {
                 $message['to'][] = [
                     'email' => $mail,
                     'name'  => $name,
@@ -99,7 +100,7 @@ class MandrillTransport extends AbstractTransport
                 ];
             }
         }
-        if ($this->config('Mandrill.preserve_recipients')) {
+        if ($this->getConfig('Mandrill.preserve_recipients')) {
             $message['preserve_recipients'] = true;
         }
         // Attachments
@@ -135,15 +136,14 @@ class MandrillTransport extends AbstractTransport
         }
     }
 
-
-/**
- * Send normal email
- *
- * @param  array  $message The Message Array
- * @param  boolean $async  Send this request asyncronized?
- * @param  boolean $ipPool IP Pool if you have a dedicated IP
- * @return array Returns an array with the results from the Mandrill API
- */
+    /**
+     * Send normal email
+     *
+     * @param  array  $message The Message Array
+     * @param  boolean $async  Send this request asyncronized?
+     * @param  boolean $ipPool IP Pool if you have a dedicated IP
+     * @return array Returns an array with the results from the Mandrill API
+     */
     protected function _send($message, $async, $ipPool, $sendAt)
     {
 
@@ -157,20 +157,20 @@ class MandrillTransport extends AbstractTransport
 
         $response = $this->http->post('/api/1.0/messages/send.json', json_encode($payload), ['type' => 'json']);
 
-        if (!$response || $response->code >= 300) {
-            throw new SocketException($response->code);
+        if (!$response || $response->getStatusCode() >= 300) {
+            throw new SocketException($response->getStatusCode());
         }
 
-        return $response->json;
+        return $response->getJson();
     }
 
-/**
- * Send Template email
- * @param  array  $message The Message Array
- * @param  boolean $async  Send this request asyncronized?
- * @param  boolean $ipPool IP Pool if you have a dedicated IP
- * @return array Returns an array with the results from the Mandrill API
- */
+    /**
+     * Send Template email
+     * @param  array  $message The Message Array
+     * @param  boolean $async  Send this request asyncronized?
+     * @param  boolean $ipPool IP Pool if you have a dedicated IP
+     * @return array Returns an array with the results from the Mandrill API
+     */
     protected function _sendTemplate($message, $async, $ipPool, $sendAt)
     {
 
@@ -190,18 +190,18 @@ class MandrillTransport extends AbstractTransport
             throw new SocketException($response->code);
         }
 
-        return $response->json;
+        return $response->getJson();
     }
 
-/**
- * Send a raw email
- *
- * @param  array  $message The Message Array
- * @param  boolean $async  Send this request asyncronized?
- * @param  boolean $ipPool IP Pool if you have a dedicated IP
- * @return array Returns an array with the results from the Mandrill API
- * @todo finish
- */
+    /**
+     * Send a raw email
+     *
+     * @param  array  $message The Message Array
+     * @param  boolean $async  Send this request asyncronized?
+     * @param  boolean $ipPool IP Pool if you have a dedicated IP
+     * @return array Returns an array with the results from the Mandrill API
+     * @todo finish
+     */
     protected function _sendRaw($message, $async, $ipPool, $sendAt)
     {
 
@@ -216,23 +216,23 @@ class MandrillTransport extends AbstractTransport
         $response = $this->http->post('/api/1.0/messages/send-raw.json', json_encode($payload), ['type' => 'json']);
 
         if (!$response) {
-            throw new SocketException($response->code);
+            throw new SocketException($response->getStatusCode());
         }
 
-        return $response->json;
+        return $response->getJson();
     }
 
 
-/**
- * Format the attachments
- *
- * @param Email $email
- * @param type $message
- * @return array Message
- */
+    /**
+     * Format the attachments
+     *
+     * @param Email $email
+     * @param type $message
+     * @return array Message
+     */
     protected function _attachments(Email $email, $message = [])
     {
-        foreach ($email->attachments() as $filename => $attach) {
+        foreach ($email->getAttachments() as $filename => $attach) {
             $content = base64_encode(file_get_contents($attach['file']));
 
             if (isset($attach['contentId'])) {
@@ -252,14 +252,14 @@ class MandrillTransport extends AbstractTransport
 
         return $message;
     }
-    
-/**
- * Decode the specified string using the current charset
- *
- * @param string $text String to decode
- * @return string Decoded string
- */
-    protected function _decode($text) 
+
+    /**
+     * Decode the specified string using the current charset
+     *
+     * @param string $text String to decode
+     * @return string Decoded string
+     */
+    protected function _decode($text)
     {
         $restore = mb_internal_encoding();
         mb_internal_encoding(Configure::read('App.encoding'));
