@@ -9,7 +9,7 @@
  * @link          http://lennaert.nu
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
-namespace App\Email;
+namespace MandrillEmail\Network\Email;
 
 use Cake\Core\Configure;
 use Cake\Mailer\Email;
